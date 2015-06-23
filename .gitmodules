@@ -1,0 +1,9 @@
+[submodule "modules/adc-interface"]
+	path = modules/adc-interface
+	url = git@github.com:stffrdhrn/adc_interface.git
+[submodule "modules/sdram-controller"]
+	path = modules/sdram-controller
+	url = git@github.com:stffrdhrn/sdram-controller.git
+[submodule "modules/pwm"]
+	path = modules/pwm
+	url = git@github.com:stffrdhrn/beeper.git
