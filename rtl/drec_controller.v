@@ -139,8 +139,6 @@ else
       default:
         sdram_addr_r <= 24'd0;
      endcase
-  else 
-    sdram_addr_r <= sdram_addr_r;
 
 /* Handle Play & Record */
 always @ (posedge clk)
