@@ -86,7 +86,7 @@ localparam   IDLE   = 2'b00,
              PLAY   = 2'b01,
              RECORD = 2'b10;
 
-/* Handle button presses and state changes */             
+/* Handle button presses and state changes */
 always @ (*) 
 case (state)
   IDLE:
