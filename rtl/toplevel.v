@@ -136,15 +136,14 @@ pwmdac daci (
 
 wire [ 11:0] adc_dataout_12b;
 assign       ADC_CLK = clk1m1;
-assign       ADC_CS_N = 1'b0;
   
-adc_interface  adc_interfacei (
-  .addr(2'b00), 
+adcspi adcspii (
   .data(adc_dataout_12b),
-  .din(ADC_OUT), 
-  .dout(ADC_IN),
-  .sclk(clk1m1), 
-  .rst(~RESET));
+  .cs_n(ADC_CS_N), 
+  .din(ADC_IN),
+  .dout(ADC_OUT),
+  .clk(clk1m1), 
+  .rst_n(RESET));
 
 assign DRAM_CLK = clk100;
 
