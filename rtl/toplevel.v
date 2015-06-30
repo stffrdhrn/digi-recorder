@@ -137,7 +137,7 @@ pwmdac daci (
 wire [ 11:0] adc_dataout_12b;
 assign       ADC_CLK = clk1m1;
   
-adcspi adcspii (
+adcspi adci (
   .data(adc_dataout_12b),
   .cs_n(ADC_CS_N), 
   .din(ADC_IN),
