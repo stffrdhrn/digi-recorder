@@ -33,9 +33,9 @@ always @ (posedge clk)
     clk_count <= 5'd0;
   else
     if (clk_count == 5'd24)
-      clk_count <= clk_count + 1'b1;
-    else
       clk_count <= 5'd0;
+    else
+      clk_count <= clk_count + 1'b1;
 
 /* if the count is over 16 then we are not transferring */      
 assign cs_n = clk_count[4];

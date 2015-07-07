@@ -27,7 +27,7 @@ module drec_controller (
   sdram_rd_data_rdy,
   sdram_rd_data_ack,
   
-  play_btn, rec_btn, btn_rst,
+  ctl_play, ctl_rec, ctl_ack,
   
   clk, rst_n
 );
@@ -48,9 +48,9 @@ output       sdram_rd_enable;
 input        sdram_rd_data_rdy;
 output       sdram_rd_data_ack;
 
-input        play_btn;
-input        rec_btn;
-output       btn_rst;
+input        ctl_play;
+input        ctl_rec;
+output       ctl_ack;
 
 input        clk;
 input        rst_n;
@@ -66,6 +66,8 @@ reg          sdram_wr_enable;
 reg          sdram_rd_enable;
 reg          sdram_rd_data_ack;
 
+reg          ctl_ack;
+
 /* Internals */
 reg  [1:0]   state;
 reg  [1:0]   next;
@@ -75,12 +77,9 @@ reg [23:0] sdram_addr_r;
 reg [4:0]  rd_wr_cntr;  // clock is at 1.1Mhz, every 25 cycles is 44K
 wire       rd_wr_enable;
 
-wire       btn_rst;
-
 assign     rd_wr_enable = (rd_wr_cntr == 5'd24);
 assign     sdram_wr_addr = sdram_addr_r;
 assign     sdram_rd_addr = sdram_addr_r;
-assign     btn_rst = !state; // When we are idle reset the input buttons
 
 localparam   IDLE   = 2'b00,
              PLAY   = 2'b01,
@@ -90,19 +89,19 @@ localparam   IDLE   = 2'b00,
 always @ (*) 
 case (state)
   IDLE:
-   if (play_btn)
+   if (ctl_play)
      next = PLAY;
-   else if (rec_btn)
+   else if (ctl_rec)
      next = RECORD;
    else 
      next = IDLE;
   PLAY:
-   if (play_btn | rec_btn)
+   if (ctl_rec)
      next = IDLE;
    else 
      next = PLAY;
   RECORD:
-   if (play_btn | rec_btn)
+   if (ctl_play)
      next = IDLE;
    else 
      next = RECORD;
@@ -116,6 +115,11 @@ if (~rst_n)
 else 
   state <= next;
 
+always @ (posedge clk)
+if (~rst_n)
+  ctl_ack <= 1'b0;
+else 
+  ctl_ack <= (ctl_play | ctl_rec);
 
 /* Handle generating signle every 44000 hz */  
 always @ (posedge clk)

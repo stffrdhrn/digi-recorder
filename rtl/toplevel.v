@@ -35,15 +35,18 @@ localparam DOUBlE_CLICK_WAIT = 19;
 
 wire clk1m1, clk100, clk110;
 
-wire play_btn, rec_btn, btn_rst;
+wire play_btn, rec_btn, btn_ack;
 wire dbl_clck_rst_n;
 
 wire [15:0] dac_data;
 wire        dac_enable;
 
 
-
-assign dbl_clck_rst_n = RESET & ~btn_rst;
+//                      0        0  0 
+//                      0        1  0 
+//                      1        0  1
+//                      1        1  0
+assign dbl_clck_rst_n = RESET & ~btn_ack;
 
 pll plli (
   .inclk0(CLOCK_50), 
@@ -85,7 +88,7 @@ drec_controller drec_controlleri (
   .sdram_rd_data_rdy(sdram_rd_data_rdy),
   .sdram_rd_data_ack(sdram_rd_data_ack),
   
-  .play_btn(play_btn), .rec_btn(rec_btn), .btn_rst(btn_rst),
+  .ctl_play(play_btn), .ctl_rec(rec_btn), .ctl_ack(btn_ack),
   
   .clk(clk1m1), .rst_n(RESET)
 );
@@ -118,11 +121,15 @@ else
 /* DONE PWM ADAPTER */
  
 fifo pwmfifo (
-  .datain(dac_data), .dataout(pwm_datain_16b),
-  .clkin(clk1m1), .clkout(clk110),
-  .wr(dac_enable), .rd(pwm_read_ack),
-  //.full(), not read
+  .wr_data(dac_data), 
+  .wr(dac_enable),
+  .full(), //not read
+  .wr_clk(clk1m1), 
+  
+  .rd_data(pwm_datain_16b),
+  .rd(pwm_read_ack),
   .empty_n(pwm_read),
+  .rd_clk(clk110),
   
   .rst_n(RESET)
 );
@@ -177,40 +184,48 @@ sdram_controller sdram_controlleri (
 );
 
 
-
 fifo #(.BUS_WIDTH(24 + 16)) wr_fifoi (
-  .datain({sdram_wr_addr, sdram_wr_data}), 
-  .dataout({wr_addr, wr_data}),
-  .clkin(clk1m1), 
-  .clkout(clk100),
+  // recorder ctl domain
+  .wr_data({sdram_wr_addr, sdram_wr_data}), 
   .wr(sdram_wr_enable), 
-  .rd(busy),
   .full(),   // TODO could be used to indicate sdram is busy
+  .wr_clk(clk1m1), 
+  // SDRAM domain
+  .rd_data({wr_addr, wr_data}),
+  .rd(busy),
   .empty_n(wr_enable),
+  .rd_clk(clk100),
+  
   .rst_n(RESET)
 );
 
 fifo #(.BUS_WIDTH(24)) rd_addrfifoi (
-  .datain(sdram_rd_addr), 
-  .dataout(rd_addr),
-  .clkin(clk1m1), 
-  .clkout(clk100),
+  // recorder ctl domain
+  .wr_data(sdram_rd_addr), 
   .wr(sdram_rd_enable), 
-  .rd(busy),
   .full(),   // TODO could be used to indicate sdram is busy
+  .wr_clk(clk1m1), 
+  // SDRAM domain
+  .rd_data(rd_addr),
+  .rd(busy),
   .empty_n(rd_enable),
+  .rd_clk(clk100),
+  
   .rst_n(RESET)
 );
 
 fifo #(.BUS_WIDTH(16)) rd_datafifoi (
-  .datain(rd_data), 
-  .dataout(sdram_rd_data),
-  .clkin(clk100), 
-  .clkout(clk1m1),
-  .wr(rd_ready), 
+  // recorder ctl domain
+  .rd_data(sdram_rd_data),
   .rd(sdram_rd_data_ack),
-  .full(),
   .empty_n(sdram_rd_data_rdy),
+  .rd_clk(clk1m1),
+  // SDRAM domain
+  .wr_data(rd_data), 
+  .wr(rd_ready), 
+  .full(),
+  .wr_clk(clk100), 
+    
   .rst_n(RESET)
 );
 endmodule
