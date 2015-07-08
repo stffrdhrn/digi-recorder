@@ -137,7 +137,7 @@ fifo pwmfifo (
 pwmdac daci (
   .pwmclk(clk110),  /* 110Mhz 44000 x 250 x 10*/
   .sample(pwm_datain_8b_r),
-  .enable(~RESET),  // TODO it would be nice to only enable DAC during PLAY
+  .enable(RESET),  // TODO it would be nice to only enable DAC during PLAY
   .pwmout(GPIO_07)
 );
 
