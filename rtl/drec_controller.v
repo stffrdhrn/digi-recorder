@@ -29,6 +29,8 @@ module drec_controller (
   
   ctl_play, ctl_rec, ctl_ack,
   
+  display,
+  
   clk, rst_n
 );
 
@@ -52,6 +54,8 @@ input        ctl_play;
 input        ctl_rec;
 output       ctl_ack;
 
+output[7:0]  display;
+
 input        clk;
 input        rst_n;
 
@@ -65,6 +69,8 @@ reg          sdram_wr_enable;
 
 reg          sdram_rd_enable;
 reg          sdram_rd_data_ack;
+
+reg [7:0]    display;
 
 reg          ctl_ack;
 
@@ -121,6 +127,20 @@ if (~rst_n)
 else 
   ctl_ack <= (ctl_play | ctl_rec);
 
+  
+always @ (posedge clk)
+if (~rst_n)
+  display <= 8'b0000_0000;
+else 
+  if ((state == RECORD) && sdram_addr_r[16]) 
+    display <= 8'b0001_1000;
+  else if (state == RECORD)
+    display <= 8'b0011_1100;
+  else if ((state == PLAY) && sdram_addr_r[16]) 
+    display <= 8'b0110_0110;
+  else if (state == PLAY)
+    display <= 8'b1001_1001;
+  
 /* Handle generating signle every 44000 hz */  
 always @ (posedge clk)
 if (~rst_n)

@@ -22,11 +22,17 @@ module toplevel (
   output        ADC_OUT,
 
   
+  /* DIP SWITCHES */
+  input [3:0]   DIP,
+  
+  /* LEDS */
+  output [7:0]  LED,
+  
   /* SPEAKER OUT */
-  output        GPIO_07,
-  output        GPIO_00,
-  output        GPIO_01,
-  output        GPIO_03,
+  output        GPIO_07, // PWM OUT
+  output        GPIO_00, // DAC SPI CS_N
+  output        GPIO_01, // DAC SPI SCLK
+  output        GPIO_03, // DAC SPI SOUT
   
   input         CLOCK_50,
   input         RESET  // KEY 0
@@ -43,7 +49,6 @@ wire dbl_clck_rst_n;
 
 wire [15:0] dac_data;
 wire        dac_enable;
-
 
 //                      0        0  0 
 //                      0        1  0 
@@ -98,6 +103,8 @@ drec_controller drec_controlleri (
   
   .ctl_play(play_btn), .ctl_rec(rec_btn), .ctl_ack(btn_ack),
   
+  .display(LED),
+  
   .clk(clk1m1), .rst_n(RESET)
 );
  
@@ -144,11 +151,11 @@ pwmdac daci (
   .pwmout(GPIO_07),
   
   .clk(pwmclk),  /* 110Mhz 44000 x 250 x 10*/
-  .rst_n(RESET),  // TODO it would be nice to only enable DAC during PLAY
+  .rst_n(RESET)  // TODO it would be nice to only enable DAC during PLAY
 );
 
 dacspi dacspidi (
-  .wr_data({4'b0011, dac_data[11:0]}),
+  .wr_data({4'b0001, dac_data[11:0]}),
   .wr(dac_enable),
   
   .spi_cs_n(GPIO_00),  // white
@@ -156,7 +163,7 @@ dacspi dacspidi (
   .spi_sdout(GPIO_03), // blue
   
   .clk(clk1m1),  /* 110Mhz 44000 x 250 x 10*/
-  .rst_n(RESET),  // TODO it would be nice to only enable DAC during PLAY
+  .rst_n(RESET)  // TODO it would be nice to only enable DAC during PLAY
 );
 
 wire [ 11:0] adc_dataout_12b;

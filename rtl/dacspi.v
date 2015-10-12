@@ -34,25 +34,26 @@ wire         spi_sdout;
 wire         sdout_enabled;
 
 assign sdout_enabled = count[4];
-assign spi_sclk = clk;
+assign spi_sclk = rst_n ? clk : 1'b0;
 assign spi_sdout = sdout_enabled ? wr_data_r[15] : 1'b0;
-assign spi_cs_n = ~count[4];
+assign spi_cs_n = rst_n ? ~count[4] : 1'b1;
 
-always @ (posedge clk)
+always @ (negedge clk)
   if (~rst_n)
   begin 
     wr_data_r <= 16'd0;
     count <= 5'd0;
-  end
-  else if (wr)
-  begin
-    wr_data_r <= wr_data;
-    count <= 5'b1_1111;
   end
   else if (sdout_enabled)
   begin
     count <= count - 1'b1;
     wr_data_r <= {wr_data_r[14:0], 1'b0};
   end
+  else if (wr)
+  begin
+    wr_data_r <= wr_data;
+    count <= 5'b1_1111;
+  end
+
 
 endmodule
