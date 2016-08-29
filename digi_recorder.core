@@ -1,0 +1,30 @@
+CAPI=1
+[main]
+description = "Digi recorder circuit for de0 nano"
+simulators = icarus
+depend = dram_controller
+
+[verilog]
+src_files =
+ rtl/adcspi.v
+ rtl/dacspi.v
+ rtl/drec_controller.v
+ rtl/pll.v
+ rtl/pwmdac.v
+ rtl/toplevel.v
+ quartus/pwmpll.v
+
+tb_private_src_files =
+ bench/dacspi_tb.v
+
+[icarus]
+depend = vlog_tb_utils-1.0
+
+[simulator]
+depend = vlog_tb_utils-1.0
+toplevel = dacspi_tb
+
+#[provider]
+#name = github
+#user = stffrdhrn
+#repo = digi_recorder

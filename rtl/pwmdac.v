@@ -20,7 +20,7 @@
  * AUTHOR: Stafford Horne
  *
  * */
-module pwmdac(
+module pwmdac (
   sample,
   pwmout,
   
@@ -35,7 +35,6 @@ parameter PWM_PER_CYLCLE = 4;
 input [SAMPLE_WIDTH-1:0] sample;
 output                   pwmout;
 input                    clk, rst_n;
-input
 
 reg  [SAMPLE_WIDTH-1:0]  sample_ff;
 reg  [7:0]               pwm_dutycyc_ff; /* keeps count of duty cycle (250hz) */
