@@ -1,41 +1,41 @@
 module toplevel (
    
-  input         BUTTON, // KEY 1
+  input         btn_n_pad_i, // KEY 1
   
   /* SDRAM INTERFACE */
-  output [1:0]  DRAM_BA,
-  output [12:0] DRAM_ADDR,
-  inout  [15:0] DRAM_DQ,
-  output [1:0]  DRAM_DQM,
-  output        DRAM_CAS_N,
-  output        DRAM_RAS_N,
-  output        DRAM_WE_N,
+  output [1:0]  dram_ba_pad_o,
+  output [12:0] sdram_a_pad_o,
+  inout  [15:0] sdram_dq_pad_io,
+  output [1:0]  sdram_dqm_pad_o,
+  output        sdram_cas_pad_o,
+  output        sdram_ras_pad_o,
+  output        sdram_we_pad_o,
   
-  output        DRAM_CS_N,
-  output        DRAM_CKE,
-  output        DRAM_CLK,
+  output        sdram_cs_n_pad_o,
+  output        sdram_cke_pad_o,
+  output        sdram_clk_pad_o,
   
   /* ADC INTERFACE */
-  output        ADC_CLK,
-  output        ADC_CS_N,
-  input         ADC_IN,
-  output        ADC_OUT,
+  output        spi1_sck_o,
+  output        spi1_ss_o,
+  input         spi1_miso_i,
+  output        spi1_mosi_o,
 
   
   /* DIP SWITCHES */
-  input [3:0]   DIP,
+  input [3:0]   gpio1_i,
   
   /* LEDS */
-  output [7:0]  LED,
+  output [7:0]  gpio0_io,
   
   /* SPEAKER OUT */
-  output        GPIO_07, // PWM OUT
-  output        GPIO_00, // DAC SPI CS_N
-  output        GPIO_01, // DAC SPI SCLK
-  output        GPIO_03, // DAC SPI SOUT
+  output        pwm1_o,
+  output        spi3_ss_o,
+  output        spi3_sck_o,
+  output        spi3_mosi_o,
   
-  input         CLOCK_50,
-  input         RESET  // KEY 0
+  input         sys_clk_pad_i,
+  input         rst_n_pad_i  // KEY 0
 
 );
 // @ 1mhz    19bit (512K) is about 1/2 second
@@ -54,26 +54,26 @@ wire        dac_enable;
 //                      0        1  0 
 //                      1        0  1
 //                      1        1  0
-assign dbl_clck_rst_n = RESET & ~btn_ack;
+assign dbl_clck_rst_n = rst_n_pad_i & ~btn_ack;
 
 pll plli (
-  .inclk0(CLOCK_50), 
-  .c0(clk100), 
-  .c1(clk1m1), 
-  .c2()
+  .inclk0    (sys_clk_pad_i), 
+  .c0        (clk100), 
+  .c1        (clk1m1), 
+  .c2        ()
 );
 
 pwmpll pwmplli (
-  .inclk0(CLOCK_50), 
-  .c0(pwmclk)
+  .inclk0    (sys_clk_pad_i), 
+  .c0        (pwmclk)
 );
 
 double_click #(.WAIT_WIDTH(DOUBlE_CLICK_WAIT)) double_clicki (
-  .button(~BUTTON), 
-  .single(play_btn), 
-  .double(rec_btn),  
-  .clk(clk1m1), 
-  .rst_n(dbl_clck_rst_n)
+  .button   (~btn_n_pad_i), 
+  .single   (play_btn), 
+  .double   (rec_btn),  
+  .clk      (clk1m1), 
+  .rst_n    (dbl_clck_rst_n)
 );
 
 wire [15:0] sdram_wr_data;
@@ -87,25 +87,30 @@ wire        sdram_rd_data_rdy;
 wire        sdram_rd_data_ack;
 
 drec_controller drec_controlleri (
-  .adc_data({4'b0000, adc_dataout_12b}), .adc_enable(),
+  .adc_data          ({4'b0000, adc_dataout_12b}),
+  .adc_enable        (),
   
-  .dac_data(dac_data), .dac_enable(dac_enable),
+  .dac_data          (dac_data),
+  .dac_enable        (dac_enable),
   
-  .sdram_wr_addr(sdram_wr_addr),
-  .sdram_wr_data(sdram_wr_data),
-  .sdram_wr_enable(sdram_wr_enable),
+  .sdram_wr_addr     (sdram_wr_addr),
+  .sdram_wr_data     (sdram_wr_data),
+  .sdram_wr_enable   (sdram_wr_enable),
   
-  .sdram_rd_data(sdram_rd_data),
-  .sdram_rd_addr(sdram_rd_addr),
-  .sdram_rd_enable(sdram_rd_enable),
-  .sdram_rd_data_rdy(sdram_rd_data_rdy),
-  .sdram_rd_data_ack(sdram_rd_data_ack),
+  .sdram_rd_data     (sdram_rd_data),
+  .sdram_rd_addr     (sdram_rd_addr),
+  .sdram_rd_enable   (sdram_rd_enable),
+  .sdram_rd_data_rdy (sdram_rd_data_rdy),
+  .sdram_rd_data_ack (sdram_rd_data_ack),
   
-  .ctl_play(play_btn), .ctl_rec(rec_btn), .ctl_ack(btn_ack),
+  .ctl_play          (play_btn),
+  .ctl_rec           (rec_btn), 
+  .ctl_ack           (btn_ack),
   
-  .display(LED),
+  .display           (gpio0_io),
   
-  .clk(clk1m1), .rst_n(RESET)
+  .clk               (clk1m1), 
+  .rst_n             (rst_n_pad_i)
 );
  
 
@@ -119,7 +124,7 @@ reg  [7:0]  pwm_datain_8b_r;
 
                         
 always @ (posedge pwmclk)
-if (~RESET) 
+if (~rst_n_pad_i) 
   begin
   pwm_read_ack <= 1'b0;
   pwm_datain_8b_r <= 8'd0;
@@ -143,41 +148,41 @@ fifo pwmfifo (
   .empty_n(pwm_read),
   .rd_clk(pwmclk),
   
-  .rst_n(RESET)
+  .rst_n(rst_n_pad_i)
 );
  
 pwmdac daci (
   .sample(pwm_datain_8b_r),
-  .pwmout(GPIO_07),
+  .pwmout(pwm1_o),
   
   .clk(pwmclk),  /* 110Mhz 44000 x 250 x 10*/
-  .rst_n(RESET)  // TODO it would be nice to only enable DAC during PLAY
+  .rst_n(rst_n_pad_i)  // TODO it would be nice to only enable DAC during PLAY
 );
 
 dacspi dacspidi (
   .wr_data({4'b0001, dac_data[11:0]}),
   .wr(dac_enable),
   
-  .spi_cs_n(GPIO_00),  // white
-  .spi_sclk(GPIO_01),  // yellow
-  .spi_sdout(GPIO_03), // blue
+  .spi_cs_n(spi3_ss_o),    // white
+  .spi_sclk(spi3_sck_o),   // yellow
+  .spi_sdout(spi3_mosi_o), // blue
   
   .clk(clk1m1),  /* 110Mhz 44000 x 250 x 10*/
-  .rst_n(RESET)  // TODO it would be nice to only enable DAC during PLAY
+  .rst_n(rst_n_pad_i)  // TODO it would be nice to only enable DAC during PLAY
 );
 
 wire [ 11:0] adc_dataout_12b;
-assign       ADC_CLK = clk1m1;
+assign       spi1_sck_o = clk1m1;
   
 adcspi adci (
-  .data(adc_dataout_12b),
-  .cs_n(ADC_CS_N), 
-  .din(ADC_IN),
-  .dout(ADC_OUT),
-  .clk(clk1m1), 
-  .rst_n(RESET));
+  .data  (adc_dataout_12b),
+  .cs_n  (spi1_ss_o), 
+  .din   (spi1_miso_i),
+  .dout  (spi1_mosi_o),
+  .clk   (clk1m1), 
+  .rst_n (rst_n_pad_i));
 
-assign DRAM_CLK = clk100;
+assign sdram_clk_pad_o = clk100;
 
 wire [23:0] wr_addr;
 wire [15:0] wr_data;
@@ -200,12 +205,19 @@ sdram_controller sdram_controlleri (
     .rd_ready(rd_ready),
     .rd_enable(rd_enable),
     
-    .busy(busy), .rst_n(RESET), .clk(clk100),
+    .busy(busy), .rst_n(rst_n_pad_i), .clk(clk100),
 
     /* SDRAM SIDE */
-    .addr(DRAM_ADDR), .bank_addr(DRAM_BA), .data(DRAM_DQ), .clock_enable(DRAM_CKE), 
-    .cs_n(DRAM_CS_N), .ras_n(DRAM_RAS_N), .cas_n(DRAM_CAS_N), .we_n(DRAM_WE_N), 
-    .data_mask_low(DRAM_DQM[0]), .data_mask_high(DRAM_DQM[1])
+    .addr          (sdram_a_pad_o),
+    .bank_addr     (sdram_ba_pad_o),
+    .data          (sdram_dq_pad_io),
+    .clock_enable  (sdram_cke_pad_o), 
+    .cs_n          (sdram_cs_n_pad_o),
+    .ras_n         (sdram_ras_pad_o),
+    .cas_n         (sdram_cas_pad_o),
+    .we_n          (sdram_we_pad_o), 
+    .data_mask_low (sdram_dqm_pad_o[0]), 
+    .data_mask_high(sdram_dqm_pad_o[1])
 );
 
 
@@ -221,7 +233,7 @@ fifo #(.BUS_WIDTH(24 + 16)) wr_fifoi (
   .empty_n(wr_enable),
   .rd_clk(clk100),
   
-  .rst_n(RESET)
+  .rst_n(rst_n_pad_i)
 );
 
 fifo #(.BUS_WIDTH(24)) rd_addrfifoi (
@@ -236,7 +248,7 @@ fifo #(.BUS_WIDTH(24)) rd_addrfifoi (
   .empty_n(rd_enable),
   .rd_clk(clk100),
   
-  .rst_n(RESET)
+  .rst_n(rst_n_pad_i)
 );
 
 fifo #(.BUS_WIDTH(16)) rd_datafifoi (
@@ -251,6 +263,6 @@ fifo #(.BUS_WIDTH(16)) rd_datafifoi (
   .full(),
   .wr_clk(clk100), 
     
-  .rst_n(RESET)
+  .rst_n(rst_n_pad_i)
 );
 endmodule
