@@ -3,7 +3,7 @@ module toplevel (
   input         btn_n_pad_i, // KEY 1
   
   /* SDRAM INTERFACE */
-  output [1:0]  dram_ba_pad_o,
+  output [1:0]  sdram_ba_pad_o,
   output [12:0] sdram_a_pad_o,
   inout  [15:0] sdram_dq_pad_io,
   output [1:0]  sdram_dqm_pad_o,
