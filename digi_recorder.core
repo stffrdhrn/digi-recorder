@@ -4,18 +4,30 @@ description = "Digi recorder circuit for de0 nano"
 simulators = icarus
 depend = dram_controller
 
-[verilog]
-src_files =
+[fileset rtl_files]
+files =
  rtl/adcspi.v
  rtl/dacspi.v
- rtl/drec_controller.v
- rtl/pll.v
  rtl/pwmdac.v
- rtl/toplevel.v
- quartus/pwmpll.v
+ rtl/drec_controller.v
+file_type = verilogSource
+usage = sim synth
 
-tb_private_src_files =
+[fileset top_files]
+scope = private
+files =
+ rtl/pll.v
+ rtl/pwmpll.v
+ rtl/toplevel.v
+file_type = verilogSource
+usage = synth
+
+[fileset tb_files]
+scope = private
+files =
  bench/dacspi_tb.v
+file_type = verilogSource
+usage = sim
 
 [icarus]
 depend = vlog_tb_utils-1.0
